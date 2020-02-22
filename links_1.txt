@@ -1,0 +1,7 @@
+www.fit.vutbr.cz:A
+google.com:O
+147.229.14.131:PTR
+147.229.14.131
+147.229.14131:
+
+www.googlecom:A
