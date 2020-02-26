@@ -17,15 +17,16 @@ endif
 get:
 ifdef PORT
 	@echo -e '\n${YELLOW}Test GET request${NC}'
-	curl localhost:${PORT}/resolve?name=www.fit.vutbr.cz\&type=A
 	@echo '---------------------------------'
-	curl localhost:${PORT}/resolve?name=46.255.231.42\&type=PTR
+	curl -v localhost:${PORT}/resolve?name=www.fit.vutbr.cz\&type=A
 	@echo '---------------------------------'
-	curl localhost:${PORT}/reslve?name=46.255.231.42\&type=PTR
+	curl -v localhost:${PORT}/resolve?name=46.255.231.42\&type=PTR
 	@echo '---------------------------------'
-	curl localhost:${PORT}/resolve?name=46255.231.42\&type=PTR
+	curl -v localhost:${PORT}/reslve?name=46.255.231.42\&type=PTR
 	@echo '---------------------------------'
-	curl localhost:${PORT}/resolve?name=www.fit.vutbr.cz\&type=PTa
+	curl -v localhost:${PORT}/resolve?name=46255.231.42\&type=PTR
+	@echo '---------------------------------'
+	curl -v localhost:${PORT}/resolve?name=www.fit.vutbr.cz\&type=PTa
 	@echo -e '${YELLOW}Test GET request completed${NC}\n'
 	
 else
@@ -35,9 +36,11 @@ endif
 post:
 ifdef PORT
 	@echo -e '\n${YELLOW}Test POST request${NC}'
-	curl --data-binary @queries.txt -X POST http://localhost:${PORT}/dns-query
+	curl -v --data-binary @queries.txt -X POST http://localhost:${PORT}/dns-query
 	@echo '---------------------------------'
-	curl --data-binary @links_1.txt -X POST http://localhost:${PORT}/dns-query
+	curl -v --data-binary @links_1.txt -X POST http://localhost:${PORT}/dns-query
+	@echo '---------------------------------'
+	curl -v --data-binary @qwe -X POST http://localhost:${PORT}/dns-query
 	@echo -e '${YELLOW}Test POST request completed${NC}\n'
 
 else
@@ -48,3 +51,5 @@ clean:
 	
 listen:
 	netstat -an | grep -G :1234
+zip:
+	zip -r xyadlo00.zip Makfile src/ readme.md
