@@ -3,18 +3,20 @@ import re
 import sys
 
 delim = "-"
-ok_200 = "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length"
+ok_200 = "HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n".encode('utf-8')
 bad_400 = "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n".encode('utf-8')
 bad_405 = " HTTP/1.1 405 Method Not Allowed\r\nConnection: close\r\n\r\n".encode('utf-8')
 serverPort = sys.argv[1] if sys.argv[1] else 123456
 
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
 print("Socket create: success")
 
 serverSocket.bind(('', int(serverPort)))
 print("Socket bind: success")
 
-serverSocket.listen(2)
+serverSocket.listen(5)
 print("Socket listining: Ready\n" + delim *
       len("Socket listining: Ready") + "\n")
 
@@ -29,7 +31,6 @@ def output(text, answer=None):
         print(answer)
     print(delim*len(text))
 
-
 def get_req(data):
     output("Request is:", data)
     try:
@@ -40,7 +41,6 @@ def get_req(data):
     if (tip not in tip_arr):
         print("400 Bad Type of request: {}".format(tip))
         return(bad_400)
-
     try:
         try:
             name = data.split("/resolve?name=")[1].split("&")[0]
@@ -50,18 +50,15 @@ def get_req(data):
         if(tip == "A"):
             addr = socket.gethostbyname(name)
         elif (tip == "PTR"):
-            if (re.findall(r'[a-zA-Z]+', name)):
-                print("Wrong name, should be IP addres, but you have: {}".format(name))
-                return(bad_400)
             addr = socket.gethostbyaddr(name)[0]
         else:
             print("405 Bad Type of request: {}".format(tip))
             return(bad_405)
         output("Answer of GET request is:", "{}:{}={}".format(name, tip, addr))
-        return("{}:{}={}\n".format(name, tip, addr).encode('utf-8'))
+
+        return(ok_200 + "{}:{}={}\n".format(name, tip, addr).encode('utf-8'))
     except:
         return(bad_400)
-
 
 def post_req(data):
     query = data.split("\r\n\r\n")[1]
@@ -87,14 +84,14 @@ def post_req(data):
             elif (tip == "PTR"):
                 addr = socket.gethostbyaddr(host)[0]
             else:
-                print(f"Bad type {tip}\n")
+                print(f"Bad type {tip}")
                 continue
             answer = answer + f'{host}:{tip}={addr}\n'
         except:
-            print("400 Bad Request with addr: {}\n".format(host))
+            print("400 Bad Request with addr: {}".format(host))
             return bad_400
     output("Answer of POST request is:", answer)
-    return answer.encode('utf-8')
+    return ok_200 + answer.encode('utf-8')
 
 # Main loop
 while True:
@@ -114,3 +111,9 @@ while True:
         cl_socket.send(bad_405)
 
     cl_socket.close()
+
+serverSocket.shutdown(socket.SHUT_RDWR)
+serverSocket.close()
+print("Connection closed")
+sys.exit(1)
+

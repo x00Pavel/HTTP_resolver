@@ -13,6 +13,7 @@ Aim of this project is to implement HTTP server which will be support basic requ
 Main body of program is represented as finite while loop. Inside this loop processing of all request is held. In case of unsupported operation server will send to user reply "405 Bad Type of request
 
 1) **_get_req_** for processing GET request
+
 2) **_post_req_** for processing POST request
 
 In each function parsing is held based on specified format of current request.
@@ -31,7 +32,17 @@ For POST request there is must be specified file, where would be on each line wr
 
 > <ADDR\>:<TYPE\>
 
-Empty line is skipped. __[[TODO]] WHAT WOULD BE IF THERE WOULD BE WRONG FORMAT__
+Empty line is skipped. If one of lines is in the wrong format, then response for this line would not be generated, but all other valid requests would be in response.
 
 In success response contain code "200 Ok" and answers in format like in GET request, but there are on each line answer on each correct request from given file.
 In error, server send response with code "400 Bad Request"
+
+For replying there are variables with template of headers
+
+1) for return code **_200 OK_**
+
+2) for wrong request format **_400 Bad request_**
+
+3) for wrong request type  **_405 Method Not Allowed_**
+
+Request by itself is parsed using regular expressions
