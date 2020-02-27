@@ -32,10 +32,16 @@ For POST request there is must be specified file, where would be on each line wr
 
 > <ADDR\>:<TYPE\>
 
+Also there is strict formatting of first line of request
+
+> POST /dns-query HTTP/1.1
+
+If this format, then response would be **_400 Bad request_**
+
 Empty line is skipped. If one of lines is in the wrong format, then response for this line would not be generated, but all other valid requests would be in response.
 
 In success response contain code "200 Ok" and answers in format like in GET request, but there are on each line answer on each correct request from given file.
-In error, server send response with code "400 Bad Request"
+In error, server send response with code "400 Bad Request". In case if in input requests there are duplicate lines, than answer would contain only uniq responses.
 
 For replying there are variables with template of headers
 
@@ -43,6 +49,8 @@ For replying there are variables with template of headers
 
 2) for wrong request format **_400 Bad request_**
 
-3) for wrong request type  **_405 Method Not Allowed_**
+3) for situation if answer on given address is not found **_404 Not Found_**
+
+4) for wrong request type  **_405 Method Not Allowed_**
 
 Request by itself is parsed using regular expressions

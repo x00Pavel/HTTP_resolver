@@ -27,6 +27,14 @@ ifdef PORT
 	curl -v localhost:${PORT}/resolve?name=46255.231.42\&type=PTR
 	@echo '---------------------------------'
 	curl -v localhost:${PORT}/resolve?name=www.fit.vutbr.cz\&type=PTa
+	@echo '---------------------------------'
+	curl -v localhost:${PORT}/reolve?name=www.fit.vutbr.cz\&type=PTR
+	@echo '---------------------------------'
+	curl -v localhost:${PORT}/resolve?name=www-us.computershare.com\&type=PTR
+	@echo '---------------------------------'
+	curl -v localhost:${PORT}/resolve?name=g.cn\&type=PTR
+	@echo '---------------------------------'
+	curl -v localhost:${PORT}/resolve?name=g.cn\&type=A
 	@echo -e '${YELLOW}Test GET request completed${NC}\n'
 	
 else

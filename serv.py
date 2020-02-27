@@ -4,8 +4,11 @@ import sys
 
 delim = "-"
 ok_200 = "HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n".encode('utf-8')
-bad_400 = "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n".encode('utf-8')
-bad_405 = " HTTP/1.1 405 Method Not Allowed\r\nConnection: close\r\n\r\n".encode('utf-8')
+bad_400 = "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n".encode(
+    'utf-8')
+bad_404 = "HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n".encode('utf-8')
+bad_405 = " HTTP/1.1 405 Method Not Allowed\r\nConnection: close\r\n\r\n".encode(
+    'utf-8')
 serverPort = sys.argv[1] if sys.argv[1] else 123456
 
 serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -24,29 +27,48 @@ tip_arr = ['A', 'PTR']
 tip = ''
 name = ''
 
+
 def output(text, answer=None):
-    print(delim*len(text))
+    print("\n"+delim*len(text))
     print(text)
     if(answer != None):
         print(answer)
-    print(delim*len(text))
+    print(delim*len(text)+"\n")
+
 
 def get_req(data):
     output("Request is:", data)
     try:
-        tip = data.split("&type=")[1].split(" ")[0]
+        first_line = data.split("\r\n")[0]
+        if not re.match(r'^GET \/resolve\?name=[1-z0-9A-Z\.\-]*&type=(PTR|A) HTTP\/1\.1$', first_line):
+            print("Wrong first line")
+            return bad_400
+        tip = re.findall(r'(A|PTR)', first_line)
     except:
         print("Not type specified. Closed")
         return(bad_400)
-    if (tip not in tip_arr):
-        print("400 Bad Type of request: {}".format(tip))
+
+    if (not tip):
+        output("400 Bad Type of request")
         return(bad_400)
+
     try:
         try:
             name = data.split("/resolve?name=")[1].split("&")[0]
+            reg = re.compile(
+                r"""(^((1?[0-9]?[0-9]\.)|
+                       (2[0-4]?[0-9]\.)|
+                       (25[0-5]?\.)){3}((1?[0-9]?[0-9])|
+                       (2[0-4]?[0-9])|(25[0-5]?))$)|
+                       (^[a-z\-]{0,6}\.?[a-zA-Z1-9]{1,}[a-zA-Z1-9\-]*\.[a-z]{2,5}$)
+                       """, re.VERBOSE)
+            if not re.match(reg, name):
+                print (f"NOT MATCH: {name}")
+                return bad_400
         except:
-            return(bad_400)
+            return bad_400
         addr = ''
+        tip = tip[0]
         if(tip == "A"):
             addr = socket.gethostbyname(name)
         elif (tip == "PTR"):
@@ -54,13 +76,21 @@ def get_req(data):
         else:
             print("405 Bad Type of request: {}".format(tip))
             return(bad_405)
-        output("Answer of GET request is:", "{}:{}={}".format(name, tip, addr))
-
-        return(ok_200 + "{}:{}={}\n".format(name, tip, addr).encode('utf-8'))
+        if not addr:
+            output("404 Not Found")
+            return bad_404
+        else: 
+            output("Answer of GET request is:", "{}:{}={}".format(name, tip, addr))
+            return(ok_200 + "{}:{}={}\n".format(name, tip, addr).encode('utf-8'))
     except:
-        return(bad_400)
+        return(bad_404)
+
 
 def post_req(data):
+    first_line = data.split("\r\n")[0]
+    if first_line !=  "POST /dns-query HTTP/1.1":
+        print("wrong first line")
+        return bad_400
     query = data.split("\r\n\r\n")[1]
     output("Body of POST request:", query)
 
@@ -69,13 +99,15 @@ def post_req(data):
     for link in links:
         try:
             host_name, tip = link.split(":")
+            if tip not in tip_arr:
+                continue
             query_dict[host_name] = tip
         except:
             print("wrong format: {}".format(link))
-            return bad_400
-    
+            continue
+            # return bad_400
     answer = ''
-    
+
     for host, tip in query_dict.items():
         try:
             addr = ''
@@ -86,12 +118,15 @@ def post_req(data):
             else:
                 print(f"Bad type {tip}")
                 continue
-            answer = answer + f'{host}:{tip}={addr}\n'
+            if addr:
+                answer = answer + f'{host}:{tip}={addr}\n'
         except:
             print("400 Bad Request with addr: {}".format(host))
-            return bad_400
+            continue
+            # return bad_400
     output("Answer of POST request is:", answer)
     return ok_200 + answer.encode('utf-8')
+
 
 # Main loop
 while True:
@@ -116,4 +151,3 @@ serverSocket.shutdown(socket.SHUT_RDWR)
 serverSocket.close()
 print("Connection closed")
 sys.exit(1)
-
