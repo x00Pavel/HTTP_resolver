@@ -61,3 +61,10 @@ listen:
 	netstat -an | grep -G :1234
 zip:
 	zip -r xyadlo00.zip Makfile src/ readme.md
+
+wget_get:
+	wget -vO- "localhost:1234/resolve?name=www.fit.vutbr.cz&type=A"
+	wget -vO- "localhost:1234/resolve?name=www.fit.vutbr.cz&type=PTR" 
+
+wget_post:
+	wget -vO- --post-file=queries.txt http://localhost:${PORT}/dns-query
